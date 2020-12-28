@@ -86,7 +86,7 @@
         <div class="coin">1</div>
     </div> -->
 
-    <canvas width="500" height="500" ref="canvas" class="canvas"></canvas>
+    <canvas v-show="showCanvas" width="100%" height="100%" ref="canvas" class="canvas"></canvas>
 </template>
 
 <script>
@@ -105,7 +105,7 @@ export default {
             randomNum2: 0,
             randomNum3: 0,
         });
-        const { canvas, animation } = useCanvas();
+        const { canvas, animation, showCanvas } = useCanvas();
         const startAni = async () => {
             // ani.randomNum = 2;
             ani.ani1 = false;
@@ -115,17 +115,40 @@ export default {
             ani.randomNum = parseInt(Math.random() * 10);
             ani.randomNum2 = parseInt(Math.random() * 10);
             ani.randomNum3 = parseInt(Math.random() * 10);
+            await sleep(1900);
+            startCoin();
 
             // console.log(parseInt(Math.random() * 10));
         };
 
-        const startCoin = () => {
-            console.log(animation.value);
+        const startCoin = async () => {
+            showCanvas.value = true;
             const nowTime = new Date().getTime();
-            animation.value(nowTime, 2000, 1, 1);
+            const position = Array.from({ length: 30 }).map((item, i) => {
+                const endX = createRandom(500, -300);
+                const endY = createRandom(550, 200);
+
+                let cX = 0;
+                let cY = 0;
+                if (endX > 200) {
+                    cX = createRandom(endX, 200);
+                }
+
+                if (endX < 200) {
+                    cX = createRandom(200, endX);
+                }
+
+                cY = createRandom(endY) - 50;
+
+                return { p: [endX, endY], c: [cX, (0.01 * cX).toFixed(2)] };
+            });
+
+            animation.value(position, nowTime, 1500, 1, 1);
+            await sleep(1600);
+            showCanvas.value = false;
         };
 
-        return { ani, startAni, canvas, startCoin };
+        return { ani, startAni, canvas, startCoin, showCanvas };
     },
 };
 
@@ -137,35 +160,20 @@ function sleep(time) {
 
 function useCanvas() {
     const canvas = ref(null);
+    const showCanvas = ref(false);
     let aniId = null;
     const animation = ref(null);
-    onMounted(() => {
+    onMounted(async () => {
         const dom = canvas.value;
-        console.log(dom);
+        dom.width = document.documentElement.clientWidth;
+        dom.height = document.documentElement.clientHeight;
         const ctx = dom.getContext('2d');
-        console.log(ctx);
 
-        // ctx.beginPath();
-        // ctx.moveTo(250, 200);
-        // ctx.bezierCurveTo(0.67, -1.21, 1, -0.33, 100, 490);
-        // ctx.stroke();
-
-        // for (let index = 0; index < 100; index++) {
-        //     const t = index / 100;
-        //     const p = cubic([250, 200], [100, 490], t);
-        //     ctx.fillRect(p.x, p.y, 5, 5);
-        // }
-        // let t = 0;
-
+        const coinImg = await loadImg('coin.png');
         // animation.value =
 
-        const position = Array.from({ length: 10 }).map((item, i) => {
-            console.log(i);
-            return [createRandom(500, -100), createRandom(500, 200)];
-        });
-        console.log(position);
-
-        const coinAnimation = (nowTime, time, w, h) => {
+        const coinAnimation = (position, nowTime, time, w, h) => {
+            ctx.clearRect(0, 0, dom.width, dom.height);
             ctx.fillStyle = 'red';
             let aniId = null;
 
@@ -177,12 +185,15 @@ function useCanvas() {
                 return;
                 // animation();
             }
-            ctx.clearRect(0, 0, 500, 500);
+            // ctx.clearRect(0, 0, 500, 500);
 
             position.forEach((item) => {
-                const p = cubic2([200, 400], item, ((t - nowTime) / time).toFixed(3));
-                const px = cubic2([200, 400], item, ((t - nowTime) / time).toFixed(3), [0, 0]);
-                ctx.fillRect(px.x, p.y, w, h);
+                const p = cubic3([200, 200], item.p, ((t - nowTime) / time).toFixed(3));
+                const p2 = cubic2([200, 200], item.p, ((t - nowTime) / time).toFixed(3), item.c);
+
+                // await img.onload();
+                // ctx.fillRect(p2.x, p2.y, w, h);
+                ctx.drawImage(coinImg, p2.x, p2.y, w, h);
             });
 
             w += 0.35;
@@ -190,19 +201,19 @@ function useCanvas() {
             // t += 0.0001;
 
             // console.log(animation.value.bind(this, [nowTime, time]));
-            aniId = requestAnimationFrame(coinAnimation.bind(this, nowTime, time, w, h));
+            aniId = requestAnimationFrame(coinAnimation.bind(this, position, nowTime, time, w, h));
         };
         // animation(1000);
         animation.value = coinAnimation;
     });
 
-    return { canvas, animation };
+    return { canvas, animation, showCanvas };
 }
 
 /**
  * 3阶贝塞尔曲线
  * @param {number[]} p1 - 起始位置 [x,y]
- * @param {number[]} p1 - 结束位置 [x,y]
+ * @param {number[]} p2 - 结束位置 [x,y]
  * @param {number} t - 0到1
  * @param {number[]} [c1] - 贝塞尔曲线控制点1 [x,y]
  * @param {number[]} [c2] - 贝塞尔曲线控制点2 [x,y]
@@ -232,11 +243,11 @@ function cubic3(p1, p2, t, c1 = [0, 0.12], c2 = [0, -0.44, -0.91]) {
 /**
  * 2阶贝塞尔曲线
  * @param {number[]} p1 - 起始位置 [x,y]
- * @param {number[]} p1 - 结束位置 [x,y]
+ * @param {number[]} p2 - 结束位置 [x,y]
  * @param {number} t - 0到1
  * @param {number[]} [c1] - 贝塞尔曲线控制点1 [x,y]
  */
-function cubic2(p1, p2, t, c1 = [1, -0.83]) {
+function cubic2(p1, p2, t, c1 = [1, -0.99]) {
     // cubic-bezier(.67,-1.21,1,-0.33)
     //
     // 贝塞尔曲线数学公式2阶  M = a(1-t)^2 + 2bt(1-t) +  ct^2
@@ -261,6 +272,24 @@ function cubic2(p1, p2, t, c1 = [1, -0.83]) {
  */
 function createRandom(end, start = 0) {
     return Math.ceil(start + Math.random() * (end - start));
+}
+
+/**
+ * 加载图片
+ */
+function loadImg(url) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+
+        img.onload = function () {
+            console.log(img);
+            resolve(img);
+        };
+        img.onerror = function (e) {
+            reject(e);
+        };
+        img.src = `http://localhost:3000/${url}`;
+    });
 }
 </script>
 <style lang="less">
@@ -442,6 +471,9 @@ p {
     // animation: coinY 2s infinite cubic-bezier(0.67, -1.21, 1, -0.33), coinBig 2s infinite;
 }
 .canvas {
-    border: 1px solid #000;
+    position: absolute;
+    left: 0;
+    top: 0;
+    // border: 1px solid #000;
 }
 </style>
