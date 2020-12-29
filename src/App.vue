@@ -125,8 +125,8 @@ export default {
             showCanvas.value = true;
             const nowTime = new Date().getTime();
             const position = Array.from({ length: 30 }).map((item, i) => {
-                const endX = createRandom(500, -300);
-                const endY = createRandom(550, 200);
+                const endX = createRandom(500, -100);
+                const endY = createRandom(350, 250);
 
                 let cX = 0;
                 let cY = 0;
