@@ -256,10 +256,10 @@ function cubic2(p1, p2, t, c1 = [1, -0.99]) {
     const c = p2; // 结束点
 
     const l = (i) => {
-        const p1 = a[i] * Math.pow(1 - t, 2);
-        const p2 = 2 * b[i] * t * (1 - t);
-        const p3 = c[i] * Math.pow(t, 2);
-        return p1 + p2 + p3;
+        const r1 = a[i] * Math.pow(1 - t, 2);
+        const r2 = 2 * b[i] * t * (1 - t);
+        const r3 = c[i] * Math.pow(t, 2);
+        return r1 + r2 + r3;
     };
     return {
         x: l(0),
