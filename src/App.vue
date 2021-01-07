@@ -92,7 +92,9 @@
 <script>
 import { onMounted, reactive, ref } from 'vue';
 import HelloWorld from './components/HelloWorld.vue';
-
+// import { gsap } from 'gsap';
+import logoImg from './assets/logo.png';
+console.log(logoImg);
 export default {
     name: 'App',
     components: {
@@ -126,7 +128,7 @@ export default {
             const nowTime = new Date().getTime();
             const position = Array.from({ length: 30 }).map((item, i) => {
                 const endX = createRandom(500, -100);
-                const endY = createRandom(350, 250);
+                const endY = createRandom(550, 450);
 
                 let cX = 0;
                 let cY = 0;
@@ -140,10 +142,10 @@ export default {
 
                 cY = createRandom(endY) - 50;
 
-                return { p: [endX, endY], c: [cX, (0.01 * cX).toFixed(2)] };
+                return { x: endX, y: endY, w: 10, h: 10 };
             });
 
-            animation.value(position, nowTime, 1500, 1, 1);
+            animation.value(position, 1500);
             await sleep(1600);
             showCanvas.value = false;
         };
@@ -170,38 +172,50 @@ function useCanvas() {
         const ctx = dom.getContext('2d');
 
         const coinImg = await loadImg('coin.png');
+
+        // gsap.to(test, {
+        //     a: 100,
+        //     b: 100,
+        //     duration: 2,
+        //     onUpdate() {
+        //         console.log(test.a);
+        //     },
+        // });
+
         // animation.value =
 
-        const coinAnimation = (position, nowTime, time, w, h) => {
+        const coinAnimation = (position, time) => {
             ctx.clearRect(0, 0, dom.width, dom.height);
             ctx.fillStyle = 'red';
-            let aniId = null;
 
-            const t = new Date().getTime();
-            // console.log(nowTime, time, t, t - nowTime > time);
-            if (t - nowTime > time) {
-                // return;
-                cancelAnimationFrame(aniId);
-                return;
-                // animation();
-            }
-            // ctx.clearRect(0, 0, 500, 500);
-
-            position.forEach((item) => {
-                const p = cubic3([200, 200], item.p, ((t - nowTime) / time).toFixed(3));
-                const p2 = cubic2([200, 200], item.p, ((t - nowTime) / time).toFixed(3), item.c);
-
-                // await img.onload();
-                // ctx.fillRect(p2.x, p2.y, w, h);
-                ctx.drawImage(coinImg, p2.x, p2.y, w, h);
+            const t1 = gsap.timeline({
+                onUpdate() {
+                    ctx.clearRect(0, 0, dom.width, dom.height);
+                    position.forEach((item) => {
+                        ctx.drawImage(coinImg, item.x, item.y, item.w, item.h);
+                    });
+                },
             });
 
-            w += 0.35;
-            h += 0.35;
+            position.forEach((item) => {
+                t1.to(item, { x: 10, y: 10, w: '+=10', h: '+=10', duration: time / 1000, ease: 'slow.out' }, 0);
+            });
+
+            // position.forEach((item) => {
+            //     const p = cubic3([200, 200], item.p, ((t - nowTime) / time).toFixed(3));
+            //     const p2 = cubic2([200, 200], item.p, ((t - nowTime) / time).toFixed(3), item.c);
+
+            //     // await img.onload();
+            //     // ctx.fillRect(p2.x, p2.y, w, h);
+            //     ctx.drawImage(coinImg, p2.x, p2.y, w, h);
+            // });
+
+            // w += 0.35;
+            // h += 0.35;
             // t += 0.0001;
 
             // console.log(animation.value.bind(this, [nowTime, time]));
-            aniId = requestAnimationFrame(coinAnimation.bind(this, position, nowTime, time, w, h));
+            // aniId = requestAnimationFrame(coinAnimation.bind(this, position, nowTime, time, w, h));
         };
         // animation(1000);
         animation.value = coinAnimation;
@@ -288,11 +302,14 @@ function loadImg(url) {
         img.onerror = function (e) {
             reject(e);
         };
-        img.src = `http://localhost:3000/${url}`;
+        img.src = logoImg;
     });
 }
 </script>
 <style lang="less">
+body {
+    background: url(/src/assets/menu-icon.png) left top no-repeat;
+}
 .demo {
     // margin: 100px auto;
     position: relative;
@@ -316,6 +333,8 @@ function loadImg(url) {
 p {
     font-size: 15px;
     color: #000;
+    background: url('/src/assets/logo.png') center no-repeat;
+    background-size: 12px auto;
 }
 
 .demo1 {
