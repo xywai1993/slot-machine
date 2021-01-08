@@ -308,7 +308,7 @@ function loadImg(url) {
 </script>
 <style lang="less">
 body {
-    background: url(/src/assets/menu-icon.png) left top no-repeat;
+    background: url('/src/assets/menu-icon.png') left top no-repeat;
 }
 .demo {
     // margin: 100px auto;
@@ -333,7 +333,7 @@ body {
 p {
     font-size: 15px;
     color: #000;
-    background: url('/src/assets/logo.png') center no-repeat;
+    background: url('./assets/logo.png') center no-repeat;
     background-size: 12px auto;
 }
 
